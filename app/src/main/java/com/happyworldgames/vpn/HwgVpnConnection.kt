@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.pm.PackageManager
 import android.net.ProxyInfo
 import android.net.VpnService
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.text.TextUtils
 import android.util.Log
@@ -327,7 +328,9 @@ class HwgVpnConnection(
         }
         builder.setSession(mServerName!!).setConfigureIntent(mConfigureIntent!!)
         if (!TextUtils.isEmpty(mProxyHostName)) {
-            builder.setHttpProxy(ProxyInfo.buildDirectProxy(mProxyHostName, mProxyHostPort))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                builder.setHttpProxy(ProxyInfo.buildDirectProxy(mProxyHostName, mProxyHostPort))
+            }
         }
         synchronized(mService) {
             vpnInterface = builder.establish()
