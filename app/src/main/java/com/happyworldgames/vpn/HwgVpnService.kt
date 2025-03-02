@@ -15,9 +15,6 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.util.Pair
 import android.widget.Toast
-import com.happyworldgames.vpn.example.ToyVpnClient
-import com.happyworldgames.vpn.example.ToyVpnConnection
-import com.happyworldgames.vpn.example.ToyVpnService
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -25,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 class HwgVpnService : VpnService(), Handler.Callback {
 
     companion object {
-        private val TAG = ToyVpnService::class.java.simpleName
+        private val TAG = HwgVpnService::class.java.simpleName
 
         val ACTION_CONNECT = "com.happyworldgames.vpn.START"
         val ACTION_DISCONNECT = "com.happyworldgames.vpn.STOP"
@@ -53,7 +50,7 @@ class HwgVpnService : VpnService(), Handler.Callback {
         mConfigureIntent = PendingIntent.getActivity(
             this, 0, Intent(
                 this,
-                ToyVpnClient::class.java
+                MainActivity::class.java
             ),
             PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -99,25 +96,27 @@ class HwgVpnService : VpnService(), Handler.Callback {
         val proxyHost = prefs.getString(MainActivity.Prefs.PROXY_HOSTNAME, "")
         val proxyPort = prefs.getInt(MainActivity.Prefs.PROXY_PORT, 0)
         startConnection(
-            ToyVpnConnection(
+            HwgVpnConnection(
                 this, mNextConnectionId.getAndIncrement(), server, port, secret,
                 proxyHost, proxyPort, allow, packages
             )
         )
     }
 
-    private fun startConnection(connection: ToyVpnConnection) {
+    private fun startConnection(connection: HwgVpnConnection) {
         // Replace any existing connecting thread with the  new one.
         val thread = Thread(connection, "ToyVpnThread")
         setConnectingThread(thread)
 
         // Handler to mark as connected once onEstablish is called.
         connection.setConfigureIntent(mConfigureIntent)
-        connection.setOnEstablishListener { tunInterface: ParcelFileDescriptor? ->
-            mHandler!!.sendEmptyMessage(R.string.connected)
-            mConnectingThread.compareAndSet(thread, null)
-            setConnection(Connection(thread, tunInterface))
-        }
+        connection.setOnEstablishListener(listener = object: HwgVpnConnection.OnEstablishListener{
+            override fun onEstablish(tunInterface: ParcelFileDescriptor?) {
+                mHandler!!.sendEmptyMessage(R.string.connected)
+                mConnectingThread.compareAndSet(thread, null)
+                setConnection(Connection(thread, tunInterface))
+            }
+        })
         thread.start()
     }
 
