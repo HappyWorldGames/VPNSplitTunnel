@@ -60,7 +60,7 @@ class HwgVpnConnection(
     }
 
     /**
-     * Callback interface to let the [ToyVpnService] know about new connections
+     * Callback interface to let the [HwgVpnService] know about new connections
      * and update the foreground notification with connection status.
      */
     interface OnEstablishListener {
@@ -152,7 +152,7 @@ class HwgVpnConnection(
             DatagramChannel.open().use { tunnel ->
 
                 // Protect the tunnel before connecting to avoid loopback.
-                check(mService!!.protect(tunnel.socket())) { "Cannot protect the tunnel" }
+                check(mService.protect(tunnel.socket())) { "Cannot protect the tunnel" }
 
                 // Connect to the server.
                 tunnel.connect(server)
@@ -295,7 +295,7 @@ class HwgVpnConnection(
     @Throws(IllegalArgumentException::class)
     private fun configure(parameters: String): ParcelFileDescriptor? {
         // Configure a builder while parsing the parameters.
-        val builder = mService!!.Builder()
+        val builder = mService.Builder()
         for (parameter in parameters.split(" ".toRegex()).dropLastWhile { it.isEmpty() }
             .toTypedArray()) {
             val fields =
